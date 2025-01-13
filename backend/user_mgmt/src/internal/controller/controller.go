@@ -123,12 +123,12 @@ func (c *UserMgmtController) GetUserHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	userId, err := uuid.Parse(params.Get("userId"))
+	urlTag, err := uuid.Parse(params.Get("urlTag"))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	user, err := c.userMgmtService.GetUser(userId)
+	user, err := c.userMgmtService.GetUser(urlTag)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

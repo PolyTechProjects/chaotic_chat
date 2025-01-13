@@ -48,6 +48,14 @@ func (s *UserMgmtService) GetUser(userId uuid.UUID) (*models.User, error) {
 	return user, nil
 }
 
+func (s *UserMgmtService) GetUserByUrlTag(urlTag string) (*models.User, error) {
+	user, err := s.Repository.GetUserByUrlTag(urlTag)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
 func (s *UserMgmtService) UpdateAvatar(userId uuid.UUID, newFileId string) (*models.User, error) {
 	user, err := s.GetUser(userId)
 	if err != nil {

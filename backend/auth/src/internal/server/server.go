@@ -25,8 +25,8 @@ func NewHttpServer(authController *controller.AuthController) *HttpServer {
 }
 
 func (h *HttpServer) StartServer() {
-	http.HandleFunc("POST /register", h.authController.RegisterHandler)
-	http.HandleFunc("POST /login", h.authController.LoginHandler)
+	http.HandleFunc("POST /auth/register", h.authController.RegisterHandler)
+	http.HandleFunc("POST /auth/login", h.authController.LoginHandler)
 }
 
 type GRPCServer struct {

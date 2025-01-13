@@ -27,6 +27,15 @@ func (r *UserMgmtRepository) GetUser(userId uuid.UUID) (*models.User, error) {
 	return &user, nil
 }
 
+func (r *UserMgmtRepository) GetUserByUrlTag(urlTag string) (*models.User, error) {
+	var user models.User
+	err := r.db.Where("url_tag = ?", urlTag).First(&user).Error
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
 func (r *UserMgmtRepository) UpdateUser(user *models.User) error {
 	return r.db.Save(user).Error
 }

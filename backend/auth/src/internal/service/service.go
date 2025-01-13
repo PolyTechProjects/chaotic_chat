@@ -59,9 +59,6 @@ func (s *AuthService) Login(login string, password string) (string, error) {
 		return "", err
 	}
 
-	refreshTokenValueString := fmt.Sprintf("%v:%v:%v", user.Id, user.Login, time.Now().Unix())
-	slog.Debug(fmt.Sprintf("refreshTokenValueString: %v", refreshTokenValueString))
-
 	accessToken, err := s.generateAccessToken(user.Id)
 	slog.Debug(fmt.Sprintf("accessToken: %v", accessToken))
 	if err != nil {
@@ -82,6 +79,7 @@ func (s *AuthService) Authorize(accessToken string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	slog.Debug(fmt.Sprintf("userId: %v", userId))
 
 	user, err := s.AuthRepository.FindById(userId)
 	if err != nil {
@@ -108,9 +106,11 @@ func (s *AuthService) ExtractUserId(tokenString string) (string, error) {
 }
 
 func (s *AuthService) generateAccessToken(userId uuid.UUID) (string, error) {
+	exp := time.Now().Add(time.Minute * 30).Unix()
+	slog.Info(fmt.Sprintf("exp: %v", exp))
 	payload := jwt.MapClaims{
 		"sub": userId,
-		"exp": time.Now().Add(time.Minute * 30).Unix(),
+		"exp": exp,
 	}
 	return jwt.NewWithClaims(jwt.SigningMethodHS256, payload).SignedString(s.jwtSecretKey)
 }
