@@ -5,18 +5,21 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/PolyTechProjects/chaotic_chat/auth/src/internal/client"
 	"github.com/PolyTechProjects/chaotic_chat/auth/src/internal/dto"
 	"github.com/PolyTechProjects/chaotic_chat/auth/src/internal/service"
 	"github.com/PolyTechProjects/chaotic_chat/auth/src/internal/validator"
 )
 
 type AuthController struct {
-	authService *service.AuthService
+	authService    *service.AuthService
+	userMgmtClient *client.UserMgmtGRPCClient
 }
 
-func NewAuthController(authService *service.AuthService) *AuthController {
+func NewAuthController(authService *service.AuthService, userMgmtClient *client.UserMgmtGRPCClient) *AuthController {
 	return &AuthController{
-		authService: authService,
+		authService:    authService,
+		userMgmtClient: userMgmtClient,
 	}
 }
 
@@ -44,12 +47,16 @@ func (a *AuthController) RegisterHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	accessToken, userId, err := a.authService.Register(req.Login, req.Username, req.Password)
+	accessToken, userId, err := a.authService.Register(req.Login, req.Password)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	//Save User in UserMgmtDb
+	_, err = a.userMgmtClient.PerformAddUser(r.Context(), userId.String(), req.Username)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	register := dto.RegisterResponse{
 		UserId: userId.String(),

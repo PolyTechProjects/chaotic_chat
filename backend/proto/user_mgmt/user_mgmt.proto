@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package user_mgmt;
+
+option go_package = "example.com/proto/user_mgmt";
+
+service UserMgmt {
+    rpc AddUser (AddUserRequest) returns (UserResponse) {}
+}
+
+message AddUserRequest {
+    string userId = 1;
+    string name = 2;
+}
+
+message UserResponse {
+    string userId = 1;
+    string name = 2;
+    string urlTag = 3;
+    string description = 4;
+    string profilePic = 5;
+}

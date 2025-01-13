@@ -9,6 +9,7 @@ import (
 	"github.com/PolyTechProjects/chaotic_chat/auth/src/config"
 	"github.com/PolyTechProjects/chaotic_chat/auth/src/database"
 	"github.com/PolyTechProjects/chaotic_chat/auth/src/internal/app"
+	"github.com/PolyTechProjects/chaotic_chat/auth/src/internal/client"
 	"github.com/PolyTechProjects/chaotic_chat/auth/src/internal/controller"
 	"github.com/PolyTechProjects/chaotic_chat/auth/src/internal/repository"
 	"github.com/PolyTechProjects/chaotic_chat/auth/src/internal/server"
@@ -25,8 +26,9 @@ func main() {
 	db := database.DB
 	repository := repository.New(db)
 	authService := service.New(repository)
+	client := client.New(cfg)
 	grpcServer := server.NewGRPCServer(authService)
-	authController := controller.NewAuthController(authService)
+	authController := controller.NewAuthController(authService, client)
 	httpServer := server.NewHttpServer(authController)
 	app := app.New(grpcServer, httpServer, cfg)
 	go app.MustRun()
