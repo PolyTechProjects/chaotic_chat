@@ -113,7 +113,7 @@ func (c *UserMgmtController) GetUserHandler(w http.ResponseWriter, r *http.Reque
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	if !params.Has("userId") {
+	if !params.Has("urlTag") {
 		http.Error(w, "URL query params are invalid", http.StatusBadRequest)
 	}
 
