@@ -22,5 +22,5 @@ go.work
 
 */volume*
 */build/*
-*/.env
+**/.env
 **/firebaseServiceAccount.json
