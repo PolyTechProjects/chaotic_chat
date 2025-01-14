@@ -11,7 +11,6 @@ type CreateChatRequest struct {
 	CreatorId       uuid.UUID   `json:"creator_id"`
 	ParticipantsIds []uuid.UUID `json:"participants_ids"`
 	IsChannel       bool        `json:"is_channel"`
-	IsClosed        bool        `json:"is_closed"`
 }
 
 type UpdateChatRequest struct {
