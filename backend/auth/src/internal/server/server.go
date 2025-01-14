@@ -52,10 +52,10 @@ func (s *GRPCServer) Start(l net.Listener) error {
 }
 
 func (s *GRPCServer) Authorize(ctx context.Context, req *auth.AuthorizeRequest) (*auth.AuthorizeResponse, error) {
-	accessToken, err := s.authService.Authorize(req.GetAccessToken())
+	accessToken, userId, err := s.authService.Authorize(req.GetAccessToken())
 	if err != nil {
 		slog.Error(err.Error())
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
-	return &auth.AuthorizeResponse{AccessToken: accessToken}, nil
+	return &auth.AuthorizeResponse{AccessToken: accessToken, UserId: userId.String()}, nil
 }

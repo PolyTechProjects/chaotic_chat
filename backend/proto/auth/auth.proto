@@ -14,4 +14,5 @@ message AuthorizeRequest {
 
 message AuthorizeResponse {
     string accessToken = 1;
+    string userId = 2;
 }
