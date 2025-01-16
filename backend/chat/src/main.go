@@ -35,8 +35,11 @@ func main() {
 	slog.Info("Creating auth client")
 	authClient := client.NewAuthClient(cfg)
 
+	slog.Info("Creating user management client")
+	client := client.NewUserMgmtClient(cfg)
+
 	slog.Info("Creating controller")
-	controller := controller.NewChatManagementController(service, authClient)
+	controller := controller.NewChatManagementController(service, authClient, client)
 
 	slog.Info("Creating gRPC server")
 	grpcServer := server.New(service, authClient)

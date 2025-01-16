@@ -26,6 +26,7 @@ func NewHttpServer(chatMgmtController *controller.ChatManagementController) *Htt
 }
 
 func (h *HttpServer) StartServer() {
+	http.HandleFunc("GET /chat", h.chatMgmtController.GetAllAvailableChatsHandler)
 	http.HandleFunc("POST /chat/room", h.chatMgmtController.CreateChatHandler)
 	http.HandleFunc("DELETE /chat/room", h.chatMgmtController.DeleteChatHandler)
 	http.HandleFunc("GET /chat/room", h.chatMgmtController.GetChatHandler)

@@ -63,3 +63,9 @@ func (r *ChatRepository) GetChatUsers(chatID uuid.UUID) ([]models.UserChat, erro
 	}
 	return userChats, nil
 }
+
+func (r *ChatRepository) GetChatsForUser(userId uuid.UUID) ([]models.UserChat, error) {
+	var userChats []models.UserChat
+	err := r.db.Where("user_id = ?", userId).Find(&userChats).Error
+	return userChats, err
+}

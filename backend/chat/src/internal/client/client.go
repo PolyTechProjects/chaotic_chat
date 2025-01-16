@@ -9,6 +9,7 @@ import (
 
 	"github.com/PolyTechProjects/chaotic_chat/chat/src/config"
 	"github.com/PolyTechProjects/chaotic_chat/chat/src/gen/go/auth"
+	"github.com/PolyTechProjects/chaotic_chat/chat/src/gen/go/user_mgmt"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
@@ -39,4 +40,26 @@ func (authClient *AuthGRPCClient) PerformAuthorize(ctx context.Context, r *http.
 		accessToken = strings.Split(authHeader, " ")[1]
 	}
 	return authClient.Authorize(ctx, &auth.AuthorizeRequest{AccessToken: accessToken})
+}
+
+type UserMgmtGRPCClient struct {
+	user_mgmt.UserMgmtClient
+}
+
+func NewUserMgmtClient(cfg *config.Config) *UserMgmtGRPCClient {
+	connectionUrl := fmt.Sprintf("%s:%s", cfg.UserMgmt.UserMgmtHost, cfg.UserMgmt.UserMgmtPort)
+	conn, err := grpc.NewClient(connectionUrl, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		panic("failed to connect: " + err.Error())
+	}
+	return &UserMgmtGRPCClient{user_mgmt.NewUserMgmtClient(conn)}
+}
+
+func (c *UserMgmtGRPCClient) PerformGetAllUsers(ctx context.Context, r *http.Request) (*user_mgmt.GetAllUsersResponse, error) {
+	if r == nil {
+		return c.UserMgmtClient.GetAllUsers(ctx, &user_mgmt.GetAllUsersRequest{})
+	} else {
+		ctx = metadata.AppendToOutgoingContext(r.Context(), "authorization", r.Header.Get("Authorization"))
+		return c.UserMgmtClient.GetAllUsers(ctx, &user_mgmt.GetAllUsersRequest{})
+	}
 }

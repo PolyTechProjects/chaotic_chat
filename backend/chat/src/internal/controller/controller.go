@@ -17,15 +17,81 @@ import (
 )
 
 type ChatManagementController struct {
-	service    *service.ChatManagementService
-	authClient *client.AuthGRPCClient
+	service        *service.ChatManagementService
+	authClient     *client.AuthGRPCClient
+	userMgmtClient *client.UserMgmtGRPCClient
 }
 
-func NewChatManagementController(service *service.ChatManagementService, authClient *client.AuthGRPCClient) *ChatManagementController {
+func NewChatManagementController(service *service.ChatManagementService, authClient *client.AuthGRPCClient, userMgmtClient *client.UserMgmtGRPCClient) *ChatManagementController {
 	return &ChatManagementController{
-		service:    service,
-		authClient: authClient,
+		service:        service,
+		authClient:     authClient,
+		userMgmtClient: userMgmtClient,
 	}
+}
+
+func (c *ChatManagementController) GetAllAvailableChatsHandler(w http.ResponseWriter, r *http.Request) {
+	authResp, err := c.authClient.PerformAuthorize(r.Context(), r)
+	if err != nil {
+		slog.Error("Authorization error", "error", err.Error())
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+	userId, err := uuid.Parse(authResp.UserId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	//Go to user_mgmt to get all available users
+	users, err := c.userMgmtClient.PerformGetAllUsers(r.Context(), r)
+	if err != nil {
+		slog.Error("Failed to get all users", "error", err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	availableUsers := make([]*dto.AvailableUsersResponse, 0)
+	for _, user := range users.Users {
+		availableUsers = append(availableUsers, &dto.AvailableUsersResponse{
+			Id:          user.UserId,
+			Name:        user.Name,
+			UrlTag:      user.UrlTag,
+			Description: user.Description,
+			ProfilePic:  user.ProfilePic,
+		})
+	}
+	chats, err := c.service.GetAllChatsForUser(userId)
+	if err != nil {
+		slog.Error("Failed to get all chats", "error", err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	availableChats := make([]*dto.AvailableChatsResponse, 0)
+	for _, chat := range chats {
+		availableChats = append(availableChats, &dto.AvailableChatsResponse{
+			Id:          chat.Id.String(),
+			Name:        chat.Name,
+			IsChannel:   chat.IsChannel,
+			Description: chat.Description,
+			ProfilePic:  chat.ProfilePic,
+		})
+	}
+
+	chatsDto := &dto.GetAllChatsResponse{
+		Users: availableUsers,
+		Chats: availableChats,
+	}
+
+	chatsResp, err := json.Marshal(chatsDto)
+	if err != nil {
+		slog.Error("Failed to marshal response", "error", err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Add("Set-Cookie", fmt.Sprintf("Authorization=%s; HttpOnly", authResp.AccessToken))
+	w.Write(chatsResp)
 }
 
 func (c *ChatManagementController) CreateChatHandler(w http.ResponseWriter, r *http.Request) {
@@ -113,8 +179,20 @@ func (c *ChatManagementController) DeleteChatHandler(w http.ResponseWriter, r *h
 		return
 	}
 
+	chat, err = c.service.GetChat(chatId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	chatResp, err := json.Marshal(chat)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Add("Set-Cookie", fmt.Sprintf("Authorization=%s; HttpOnly", authResp.AccessToken))
+	w.Write(chatResp)
 }
 
 func (c *ChatManagementController) GetChatHandler(w http.ResponseWriter, r *http.Request) {
@@ -246,8 +324,20 @@ func (c *ChatManagementController) DeleteUsersInChatHandler(w http.ResponseWrite
 		return
 	}
 
+	chat, err = c.service.GetChat(req.ChatId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	chatResp, err := json.Marshal(chat)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Add("Set-Cookie", fmt.Sprintf("Authorization=%s; HttpOnly", authResp.AccessToken))
+	w.Write(chatResp)
 }
 
 func (c *ChatManagementController) AddUsersInChatHandler(w http.ResponseWriter, r *http.Request) {
@@ -282,8 +372,20 @@ func (c *ChatManagementController) AddUsersInChatHandler(w http.ResponseWriter, 
 		return
 	}
 
+	chat, err = c.service.GetChat(req.ChatId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	chatResp, err := json.Marshal(chat)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Add("Set-Cookie", fmt.Sprintf("Authorization=%s; HttpOnly", authResp.AccessToken))
+	w.Write(chatResp)
 }
 
 func (c *ChatManagementController) MakeReadersUsersInChatHandler(w http.ResponseWriter, r *http.Request) {
@@ -318,8 +420,20 @@ func (c *ChatManagementController) MakeReadersUsersInChatHandler(w http.Response
 		return
 	}
 
+	chat, err = c.service.GetChat(req.ChatId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	chatResp, err := json.Marshal(chat)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Add("Set-Cookie", fmt.Sprintf("Authorization=%s; HttpOnly", authResp.AccessToken))
+	w.Write(chatResp)
 }
 
 func (c *ChatManagementController) MakeUsersReadersInChatHandler(w http.ResponseWriter, r *http.Request) {
@@ -354,8 +468,20 @@ func (c *ChatManagementController) MakeUsersReadersInChatHandler(w http.Response
 		return
 	}
 
+	chat, err = c.service.GetChat(req.ChatId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	chatResp, err := json.Marshal(chat)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Add("Set-Cookie", fmt.Sprintf("Authorization=%s; HttpOnly", authResp.AccessToken))
+	w.Write(chatResp)
 }
 
 func (c *ChatManagementController) AddAdminsInChatHandler(w http.ResponseWriter, r *http.Request) {
@@ -390,8 +516,20 @@ func (c *ChatManagementController) AddAdminsInChatHandler(w http.ResponseWriter,
 		return
 	}
 
+	chat, err = c.service.GetChat(req.ChatId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	chatResp, err := json.Marshal(chat)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Add("Set-Cookie", fmt.Sprintf("Authorization=%s; HttpOnly", authResp.AccessToken))
+	w.Write(chatResp)
 }
 
 func (c *ChatManagementController) DeleteAdminsInChatHandler(w http.ResponseWriter, r *http.Request) {
@@ -426,8 +564,20 @@ func (c *ChatManagementController) DeleteAdminsInChatHandler(w http.ResponseWrit
 		return
 	}
 
+	chat, err = c.service.GetChat(req.ChatId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	chatResp, err := json.Marshal(chat)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Add("Set-Cookie", fmt.Sprintf("Authorization=%s; HttpOnly", authResp.AccessToken))
+	w.Write(chatResp)
 }
 
 func (c *ChatManagementController) JoinChatHandler(w http.ResponseWriter, r *http.Request) {
@@ -444,12 +594,18 @@ func (c *ChatManagementController) JoinChatHandler(w http.ResponseWriter, r *htt
 		return
 	}
 
-	err = c.service.JoinChat(joinLink, userId)
+	chat, err := c.service.JoinChat(joinLink, userId)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	chatResp, err := json.Marshal(chat)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Add("Set-Cookie", fmt.Sprintf("Authorization=%s; HttpOnly", authResp.AccessToken))
+	w.Write(chatResp)
 }

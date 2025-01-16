@@ -23,6 +23,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type UserMgmtClient interface {
 	AddUser(ctx context.Context, in *AddUserRequest, opts ...grpc.CallOption) (*UserResponse, error)
+	GetAllUsers(ctx context.Context, in *GetAllUsersRequest, opts ...grpc.CallOption) (*GetAllUsersResponse, error)
 }
 
 type userMgmtClient struct {
@@ -42,11 +43,21 @@ func (c *userMgmtClient) AddUser(ctx context.Context, in *AddUserRequest, opts .
 	return out, nil
 }
 
+func (c *userMgmtClient) GetAllUsers(ctx context.Context, in *GetAllUsersRequest, opts ...grpc.CallOption) (*GetAllUsersResponse, error) {
+	out := new(GetAllUsersResponse)
+	err := c.cc.Invoke(ctx, "/user_mgmt.UserMgmt/GetAllUsers", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserMgmtServer is the server API for UserMgmt service.
 // All implementations must embed UnimplementedUserMgmtServer
 // for forward compatibility
 type UserMgmtServer interface {
 	AddUser(context.Context, *AddUserRequest) (*UserResponse, error)
+	GetAllUsers(context.Context, *GetAllUsersRequest) (*GetAllUsersResponse, error)
 	mustEmbedUnimplementedUserMgmtServer()
 }
 
@@ -56,6 +67,9 @@ type UnimplementedUserMgmtServer struct {
 
 func (UnimplementedUserMgmtServer) AddUser(context.Context, *AddUserRequest) (*UserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddUser not implemented")
+}
+func (UnimplementedUserMgmtServer) GetAllUsers(context.Context, *GetAllUsersRequest) (*GetAllUsersResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAllUsers not implemented")
 }
 func (UnimplementedUserMgmtServer) mustEmbedUnimplementedUserMgmtServer() {}
 
@@ -88,6 +102,24 @@ func _UserMgmt_AddUser_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserMgmt_GetAllUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAllUsersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserMgmtServer).GetAllUsers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/user_mgmt.UserMgmt/GetAllUsers",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserMgmtServer).GetAllUsers(ctx, req.(*GetAllUsersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UserMgmt_ServiceDesc is the grpc.ServiceDesc for UserMgmt service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -98,6 +130,10 @@ var UserMgmt_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AddUser",
 			Handler:    _UserMgmt_AddUser_Handler,
+		},
+		{
+			MethodName: "GetAllUsers",
+			Handler:    _UserMgmt_GetAllUsers_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -6,6 +6,7 @@ option go_package = "example.com/proto/user_mgmt";
 
 service UserMgmt {
     rpc AddUser (AddUserRequest) returns (UserResponse) {}
+    rpc GetAllUsers (GetAllUsersRequest) returns (GetAllUsersResponse) {}
 }
 
 message AddUserRequest {
@@ -19,4 +20,11 @@ message UserResponse {
     string urlTag = 3;
     string description = 4;
     string profilePic = 5;
+}
+
+message GetAllUsersRequest {
+}
+
+message GetAllUsersResponse {
+    repeated UserResponse users = 1;
 }

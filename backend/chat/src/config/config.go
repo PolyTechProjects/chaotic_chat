@@ -7,6 +7,7 @@ import (
 
 type Config struct {
 	Auth     AuthConfig
+	UserMgmt UserMgmtConfig
 	App      AppConfig
 	Database DatabaseConfig
 }
@@ -14,6 +15,11 @@ type Config struct {
 type AuthConfig struct {
 	AuthHost string `env:"AUTH_APP_HOST"`
 	AuthPort string `env:"AUTH_APP_PORT"`
+}
+
+type UserMgmtConfig struct {
+	UserMgmtHost string `env:"USER_MGMT_HOST"`
+	UserMgmtPort string `env:"USER_MGMT_PORT"`
 }
 
 type AppConfig struct {
