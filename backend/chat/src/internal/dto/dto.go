@@ -41,3 +41,24 @@ type GetChatResponse struct {
 	Admins  []string
 	Readers []string
 }
+
+type GetAllChatsResponse struct {
+	Users []*AvailableUsersResponse `json:"users"`
+	Chats []*AvailableChatsResponse `json:"chats"`
+}
+
+type AvailableUsersResponse struct {
+	Id          string `json:"id"`
+	Name        string `json:"name"`
+	UrlTag      string `json:"url_tag"`
+	Description string `json:"description"`
+	ProfilePic  string `json:"profile_pic"`
+}
+
+type AvailableChatsResponse struct {
+	Id          string `json:"id"`
+	Name        string `json:"name"`
+	IsChannel   bool   `json:"is_channel"`
+	Description string `json:"description"`
+	ProfilePic  string `json:"profile_pic"`
+}

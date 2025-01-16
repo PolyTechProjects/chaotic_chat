@@ -123,19 +123,19 @@ func (s *ChatManagementService) UpdateChat(req *dto.UpdateChatRequest) error {
 	return nil
 }
 
-func (s *ChatManagementService) JoinChat(joinLink string, userId uuid.UUID) error {
+func (s *ChatManagementService) JoinChat(joinLink string, userId uuid.UUID) (*models.Chat, error) {
 	chat, err := s.repo.FindByJoinLink(joinLink)
 	if err != nil {
 		slog.Error("Failed to find chat by join link", "error", err.Error())
-		return err
+		return nil, err
 	}
 	userChats, err := s.repo.GetChatUsers(chat.Id)
 	if err != nil {
 		slog.Error("Failed to get chat users", "error", err.Error())
-		return err
+		return nil, err
 	}
 	if len(userChats) > 19 && !chat.IsChannel {
-		return errors.New("chat is full")
+		return nil, errors.New("chat is full")
 	}
 	userChat := &models.UserChat{
 		ChatId:   chat.Id,
@@ -146,9 +146,9 @@ func (s *ChatManagementService) JoinChat(joinLink string, userId uuid.UUID) erro
 	err = s.repo.AddUserToChat(userChat)
 	if err != nil {
 		slog.Error("Failed to add user to chat", "error", err.Error())
-		return err
+		return nil, err
 	}
-	return nil
+	return chat, nil
 }
 
 func (s *ChatManagementService) DeleteUsers(chatId uuid.UUID, userIds []uuid.UUID) error {
@@ -296,4 +296,22 @@ func (s *ChatManagementService) DeleteAdmin(chatId uuid.UUID, adminsIds []uuid.U
 		}
 	}
 	return nil
+}
+
+func (s *ChatManagementService) GetAllChatsForUser(userId uuid.UUID) ([]*models.Chat, error) {
+	userChats, err := s.repo.GetChatsForUser(userId)
+	if err != nil {
+		slog.Error("Failed to get all chats for user", "error", err.Error())
+		return nil, err
+	}
+	chats := make([]*models.Chat, 0)
+	for _, userChat := range userChats {
+		chat, err := s.repo.FindById(userChat.ChatId)
+		if err != nil {
+			slog.Error("Failed to find chat", "error", err.Error())
+			return nil, err
+		}
+		chats = append(chats, chat)
+	}
+	return chats, nil
 }
